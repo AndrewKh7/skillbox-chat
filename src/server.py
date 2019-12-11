@@ -8,7 +8,7 @@
 #  Ctrl + Alt + L - форматирование кода
 #
 from twisted.internet import reactor
-from twisted.internet.protocol import ServerFactory, connectionDone
+from twisted.internet.protocol import ServerFactory, connectionDone, Protocol
 from twisted.protocols.basic import LineOnlyReceiver
 
 
@@ -18,27 +18,38 @@ class ServerProtocol(LineOnlyReceiver):
 
     def connectionMade(self):
         # Потенциальный баг для внимательных =)
-        self.factory.clients.append(self)
+        self.sendLine("Hi! Please login!".encode())
 
     def connectionLost(self, reason=connectionDone):
-        self.factory.clients.remove(self)
+        if self.login is not None:
+            print(f"{self.login} disconnected")
+        if self.login is not None:
+            self.factory.clients.remove(self)
 
     def lineReceived(self, line: bytes):
-        content = line.decode()
+        try:
+            content = line.decode()
+        except Exception as e:
+            print(e) # Просто чтоб сервер не падал в случае неудачной декодировки символов
+            return
 
         if self.login is not None:
             content = f"Message from {self.login}: {content}"
-
             for user in self.factory.clients:
                 if user is not self:
                     user.sendLine(content.encode())
+                    print(f"Send to {user.login}")
+
         else:
             # login:admin -> admin
-            if content.startswith("login:"):
-                self.login = content.replace("login:", "")
+            if content not in [user.login for user in self.factory.clients]:
+                self.login = content
                 self.sendLine("Welcome!".encode())
+                self.factory.clients.append(self) # перенес сюда, чтобы пользователь не добавлялся в случае неудачной авторизации
+                print(f"{self.login} joined")
             else:
-                self.sendLine("Invalid login".encode())
+                self.sendLine(f"Login {content} is already exists!\nDisconnected!".encode())
+                self.transport.loseConnection() # закрытие соединения после неудачного ввода имени пользователя
 
 
 class Server(ServerFactory):
