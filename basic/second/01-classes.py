@@ -1,4 +1,10 @@
-
+#  Created by Artem Manchenkov
+#  artyom@manchenkoff.me
+#
+#  Copyright © 2019
+#
+#  Основы ООП - конструктор, наследование, перегрузка, полиморфизм, инкапсуляция
+#
 
 class User:
     first_name: str
@@ -6,14 +12,16 @@ class User:
 
     def __init__(self, first_name, last_name):
         self.first_name = first_name
-        self.last_name = last_name 
+        self.last_name = last_name
 
-    def fullName(self):
-        # return " ".join((self.first_name,self.last_name))
-        return f"Full name: {self.first_name} {self.last_name}"
+    def full_name(self):
+        # return self.first_name + self.last_name
+        return f"Fullname: {self.first_name} {self.last_name}"
 
     def show_age(self):
-        print("I have'n age!")
+        print("I have no age")
+
+
 class AgedUser(User):
     __age: int
 
@@ -21,15 +29,18 @@ class AgedUser(User):
         super().__init__(first_name, last_name)
         self.__age = age
 
-    def fullName(self):
-        return f"{super().fullName()}, {self.__age}"
+    def full_name(self):
+        return super().full_name() + f", Age: {self.__age}"
 
     def show_age(self):
-        return self.__age
+        print(self.__age)
 
 
-aged_jhon = AgedUser("Jhom", "Due", 15)
-artur = User("Artur","Due")
+unaged_artur = User("Artur", "Doe")
+unaged_artur.show_age()
 
+aged_john = AgedUser("John", "Doe", 30)
+# aged_john.__age = 10
+# print(aged_john.full_name())
 
-print(aged_jhon.fullName())
+aged_john.show_age()
