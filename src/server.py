@@ -35,6 +35,7 @@ class ServerProtocol(LineOnlyReceiver):
 
         if self.login is not None:
             content = f"Message from {self.login}: {content}"
+            self.__saveHistory(content)
             for user in self.factory.clients:
                 if user is not self:
                     user.sendLine(content.encode())
@@ -46,15 +47,26 @@ class ServerProtocol(LineOnlyReceiver):
                 self.login = content
                 self.sendLine("Welcome!".encode())
                 self.factory.clients.append(self) # перенес сюда, чтобы пользователь не добавлялся в случае неудачной авторизации
+                self.sendHistory()
                 print(f"{self.login} joined")
             else:
                 self.sendLine(f"Login {content} is already exists!\nDisconnected!".encode())
                 self.transport.loseConnection() # закрытие соединения после неудачного ввода имени пользователя
 
+    def __saveHistory(self,msg):
+        self.factory.hysory = self.factory.hysory[1::1]
+        self.factory.hysory.append(msg.encode())
+
+    def sendHistory(self):
+        for msg in self.factory.hysory:
+            if msg is not None:
+                self.sendLine(msg)
+
 
 class Server(ServerFactory):
     protocol = ServerProtocol
     clients: list
+    hysory: list = [None]*10
 
     def startFactory(self):
         self.clients = []
